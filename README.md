@@ -29,6 +29,7 @@ shared history:
 - `backend`  — Bun server, zero npm dependencies ([server.js](backend/server.js))
 - `frontend` — Angular 19 app ([angular.json](frontend/angular.json))
 - `cli`      — zero-dependency Node CLI ([cli.js](cli.js))
+- `bundle`   — **generated**, see [Generated bundle branch](#generated-bundle-branch) below
 
 The `main` branch (this one) is an **aggregator**: it doesn't contain any of
 those layers itself, it mounts each branch as a **git submodule** pointing at
@@ -38,6 +39,7 @@ this repo, checked out on its own branch:
 backend/   -> submodule, tracks branch "backend"
 frontend/  -> submodule, tracks branch "frontend"
 cli/       -> submodule, tracks branch "cli"
+bundle/    -> submodule, tracks branch "bundle" (generated, do not hand-edit)
 ```
 
 This keeps each layer's history and files isolated, while `main` gives a single
@@ -101,3 +103,31 @@ git push
 ```
 
 Repeat the same for `frontend` or `cli` as needed.
+
+## Generated bundle branch
+
+`bundle` is **generated output, not hand-edited**. It's a self-contained,
+deployable copy of the app: the backend server, the built frontend, and the
+CLI, plus a Dockerfile/`railway.json` for shipping it as one container.
+
+It's produced by [scripts/build-bundle.mjs](scripts/build-bundle.mjs), a
+zero-dependency Node script (run from the repo root) that:
+
+1. updates `backend`, `frontend`, and `cli` to their branch tips,
+2. runs `npm install` + `npm run build` in `frontend` (fails loudly if
+   `frontend/dist/snip-frontend/browser/index.html` is missing),
+3. assembles `bundle/`: copies `backend/server.js` and `cli/cli.js` as-is,
+   copies the frontend build output to `bundle/public`, and writes `.env`
+   (`PUBLIC_DIR=./public`, auto-loaded by Bun so the server also serves the
+   UI), `package.json` (`"start": "bun server.js"`, no `"type"` field so
+   `cli.js` still runs under plain Node), `Dockerfile`, `.dockerignore`, and
+   `railway.json`,
+4. commits inside `bundle/` and bumps the submodule pointers on `main` —
+   each commit is skipped when there's nothing staged, so re-running with no
+   upstream changes is a safe no-op.
+
+```bash
+node scripts/build-bundle.mjs          # build + commit locally
+node scripts/build-bundle.mjs --push   # also push bundle and main
+```
+
