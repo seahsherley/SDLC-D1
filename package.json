@@ -1,0 +1,9 @@
+{
+  "name": "snip-bundle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generated deployable bundle of the Snip backend, UI, and CLI",
+  "scripts": {
+    "start": "bun server.js"
+  }
+}
