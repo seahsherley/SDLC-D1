@@ -3,7 +3,9 @@ name: Build and push image
 # `bundle` here is the submodule pointer (gitlink), not the folder contents,
 # so this fires exactly when a new bundle release is pinned on main.
 # Requires repo Settings > Actions > General > Workflow permissions set to
-# "Read and write permissions" for GITHUB_TOKEN to push to ghcr.io.
+# "Read and write permissions" for GITHUB_TOKEN to push to ghcr.io, and the
+# ghcr.io package (once created) to grant this repo Write under
+# "Manage Actions access" in the package's own settings.
 on:
   push:
     branches: [main]
